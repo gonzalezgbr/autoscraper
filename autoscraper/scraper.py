@@ -1,10 +1,11 @@
+import csv
 import json
 
 import requests
 
 from config.stores import STORES
 from config.urls import UrlBuilder
-from models import Category
+from models import Category, SubCategory, Product
 
 
 class Scraper:
@@ -14,6 +15,13 @@ class Scraper:
         self._store_name = store_name
         self._store = STORES[store_name]
         self._url_builder = UrlBuilder()
+
+    def set_writer(self, outfile):
+        """Inicializa writer y filepath para persistir los productos."""
+
+        self._outfile = outfile
+        self._writer = csv.DictWriter(self._outfile, Product.get_fields(), lineterminator='\n')
+        self._writer.writeheader()
 
     def parse_categories(self, text: str) -> list[Category]:
         """Devuelve categorías extraídas del json descargado."""
@@ -35,7 +43,58 @@ class Scraper:
 
         categories_url = self._url_builder.build_categories_url()
         # TODO: agregar headers
-        r = requests.get(categories_url, timeout=10)
+        cookies = {
+            "store-sale-channel": "12",
+            "storeSelectorId": "113",
+            "userSelectedStore": "true",
+            "VTEXSC": "sc=12"}
+        r = requests.get(categories_url, timeout=10, cookies=cookies)
         categories = self.parse_categories(r.text)
 
         return categories
+
+    def parse_products(self, products_data: list, category_name: str, subcategory_name: str) -> list[Product]:
+        """Retorna una lista de productos parseados del json descargado."""
+        products = []
+        for product_data in products_data:
+            # product_data es un dict con toda la data (de la api) p un producto
+            start_specific_category = product_data['categories'][0][:-2].rfind('/')+1
+            products.append(Product(
+                name=product_data['productName'],
+                regular_price=product_data['items'][0]['sellers'][0]['commertialOffer']['ListPrice'],
+                promotional_price=product_data['items'][0]['sellers'][0]['commertialOffer']['Price'],
+                general_category=category_name,
+                subcategory=subcategory_name,
+                specific_category=product_data['categories'][0][start_specific_category:-1].lower(),
+                sku=product_data['productId'],
+                url=product_data['link'],
+                stock=product_data['items'][0]['sellers'][0]['commertialOffer']['AvailableQuantity'],
+                description=product_data['description'],
+                ))
+
+        return products
+
+    def save_products(self, products: list[Product]):
+        """Persiste en disco la data de productos procesados al momento."""
+        self._writer.writerows(map(lambda p: p.__dict__, products))
+
+    def get_products(self, category_name: str, subcategory: SubCategory):
+        """Descarga todos los productos de la sucursal y los persiste en disco."""
+
+        items_found = True
+        start = 0
+        # ciclo de a 50 items, lo max permitido por la api en una consulta
+        while items_found:
+            url = self._url_builder.build_product_url(start, subcategory.link, self._store)
+            print(url)
+            r = requests.get(url, timeout=10)
+            products_data = json.loads(r.text)
+            # chequeo si el resultado de la consulta tiene items o está vacío
+            if not products_data:
+                items_found = False
+                break
+
+            # products_data es una lista de max. 50 productos
+            products = self.parse_products(products_data, category_name, subcategory.name)
+            self.save_products(products)
+            start += 50
