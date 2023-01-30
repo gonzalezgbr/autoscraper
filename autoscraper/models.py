@@ -50,3 +50,13 @@ class Product:
     def get_fields() -> list[str]:
         """Devuelve los nombres de los campos de la clase."""
         return [field.name for field in fields(Product)]
+
+
+@dataclass
+class Store:
+    """Sucursal disponible para scraping."""
+    name: str
+    sc: int
+
+    def __str__(self):
+        return self.name
