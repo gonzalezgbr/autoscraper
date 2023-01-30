@@ -7,6 +7,11 @@ class UrlBuilder:
         self._PRODUCT_BASE_URL = 'api/catalog_system/pub/products/search'
         self._CATEGORIES_URL = 'api/catalog_system/pub/facets/search?ft'
 
+    def build_store_url(self) -> str:
+        """Devuelve url para scrapear sucursales."""
+
+        return self._BASE_URL + self._STORES_URL
+
     def build_categories_url(self):
         """Devuelve url para scrapear categorías."""
 
