@@ -59,4 +59,4 @@ class Store:
     sc: int
 
     def __str__(self):
-        return self.name
+        return f'{str(self.sc)}: {self.name}'
