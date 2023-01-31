@@ -1,19 +1,19 @@
 import csv
 import json
+import sys
 
 import requests
 
-from config.stores import STORES
 from config.urls import UrlBuilder
-from models import Category, SubCategory, Product
+from models import Category, Product, Store, SubCategory
 
 
 class Scraper:
     """Descarga los datos de categorías y productos de una sucursal."""
 
-    def __init__(self, store_name: str):
-        self._store_name = store_name
-        self._store = STORES[store_name]
+    def __init__(self, store: Store):
+        self._store_name = store.name
+        self._store = store.sc
         self._url_builder = UrlBuilder()
 
     def set_writer(self, outfile):
@@ -42,13 +42,14 @@ class Scraper:
         """Descarga todas las categorías de productos disponibles."""
 
         categories_url = self._url_builder.build_categories_url()
-        # TODO: agregar headers
-        cookies = {
-            "store-sale-channel": "12",
-            "storeSelectorId": "113",
-            "userSelectedStore": "true",
-            "VTEXSC": "sc=12"}
-        r = requests.get(categories_url, timeout=10, cookies=cookies)
+        try:
+            r = requests.get(categories_url, timeout=10)
+        except requests.exceptions.RequestException as e:
+            print(f'ERROR: no se pudo realizar la descarga {e}')
+            sys.exit(1)
+        except json.decoder.JSONDecodeError as e:
+            print(f'ERROR: json descargado inválido {e}')
+            sys.exit(1)
         categories = self.parse_categories(r.text)
 
         return categories
@@ -78,17 +79,24 @@ class Scraper:
         """Persiste en disco la data de productos procesados al momento."""
         self._writer.writerows(map(lambda p: p.__dict__, products))
 
-    def get_products(self, category_name: str, subcategory: SubCategory):
+    def get_products(self, category_name: str, subcategory: SubCategory) -> int:
         """Descarga todos los productos de la sucursal y los persiste en disco."""
-
+        items_nbr = 0
         items_found = True
         start = 0
         # ciclo de a 50 items, lo max permitido por la api en una consulta
         while items_found:
             url = self._url_builder.build_product_url(start, subcategory.link, self._store)
-            print(url)
-            r = requests.get(url, timeout=10)
-            products_data = json.loads(r.text)
+            try:
+                r = requests.get(url, timeout=10)
+                products_data = json.loads(r.text)
+            except requests.exceptions.RequestException as e:
+                print(f'ERROR: no se pudo realizar la descarga {e}')
+                sys.exit(1)
+            except json.decoder.JSONDecodeError as e:
+                print(f'ERROR: json descargado inválido {e}')
+                sys.exit(1)
+
             # chequeo si el resultado de la consulta tiene items o está vacío
             if not products_data:
                 items_found = False
@@ -96,5 +104,8 @@ class Scraper:
 
             # products_data es una lista de max. 50 productos
             products = self.parse_products(products_data, category_name, subcategory.name)
+            items_nbr += len(products)
             self.save_products(products)
             start += 50
+
+        return items_nbr

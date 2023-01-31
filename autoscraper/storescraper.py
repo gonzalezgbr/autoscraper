@@ -1,4 +1,5 @@
 import json
+import sys
 
 import requests
 
@@ -25,9 +26,16 @@ class StoreScraper:
         return stores
 
     def get_stores(self) -> list[Store]:
-        """Descarga y persiste el listado de sucursales disponibles"""
+        """Descarga el listado de sucursales disponibles"""
         url = self._url_builder.build_store_url()
-        r = requests.get(url, timeout=10)
-        stores = self.parse_stores(r.text)
+        try:
+            r = requests.get(url, timeout=10)
+            stores = self.parse_stores(r.text)
+        except requests.exceptions.RequestException as e:
+            print(f'ERROR: no se pudo realizar la descarga {e}')
+            sys.exit(1)
+        except json.decoder.JSONDecodeError as e:
+            print(f'ERROR: json descargado inválido {e}')
+            sys.exit(1)
 
         return stores
