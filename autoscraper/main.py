@@ -1,9 +1,10 @@
 import argparse
-
-from scraper import Scraper
-from storescraper import StoreScraper
+import sys
 
 from autoscraper import __version__
+from scraper import Scraper
+from storescraper import StoreScraper
+from utils import get_full_path
 
 
 def parse_cmd_line_arguments():
@@ -14,10 +15,13 @@ def parse_cmd_line_arguments():
         epilog="Gracias por usar autoscraper!",
     )
     parser.version = __version__
-
+    help_msge_ruta = """Ruta y nombre de archivo de salida. Por defecto, se 
+    guarda en home del usuario como: nro_sucursal-nombre_sucursal-productos-fecha-hora.csv"""
     parser.add_argument("-v", "--version", action="version")
     parser.add_argument("-vc", "--ver-sucursales", action="store_true",
                         help="Ver listado de sucursales disponibles")
+    parser.add_argument("sucursal", help="Nro de sucursal a scrapear")
+    parser.add_argument("-r", "--ruta", help=help_msge_ruta)
 
     return parser.parse_args()
 
@@ -25,26 +29,45 @@ def parse_cmd_line_arguments():
 def main():
     """Función principal, direcciona ejecución del programa."""
 
+    stores = StoreScraper().get_stores()
+
     args = parse_cmd_line_arguments()
     if args.ver_sucursales:
-        stores = StoreScraper().get_stores()
         for store in stores:
             print(store)
         return
 
-    store_name = 'Hipermercado Sgo. Del Estero'
-    scraper = Scraper(store_name)
-    categories = scraper.get_categories()
-    for cat in categories:
-        print(cat)
-    print(f'Total categorias: {len(categories)}')
+    # Valido store ingresada
+    for store in stores:
+        if store.sc == int(args.sucursal):
+            selected_store = store
+            break
+    else:
+        print('ERROR: Nro de sucursal inválido. Use la opción -vc para ver las sucursales disponibles',
+              file=sys.stderr)
+        return
 
-    filename = '../data/products-hiper-sde.txt'
-    with open(filename, 'w', encoding='utf8') as outfile:
+    # Setear ruta
+    if args.ruta:
+        path, filename = get_full_path(args.ruta, store)
+    else:
+        path, filename = get_full_path('', store)
+
+    scraper = Scraper(selected_store)
+    categories = scraper.get_categories()
+
+    print(f'***Iniciando scraping para sucursal {store.name}')
+    with open(path / filename, 'w', encoding='utf8') as outfile:
+        total_items = 0
         scraper.set_writer(outfile)
-        for category in categories:
+        for category in categories[5:8]:
+            print(f'***Recolectando datos de productos de {category.name}')
             for subcategory in category.subcategories:
-                scraper.get_products(category.name, subcategory)
+                items_nbr = scraper.get_products(category.name, subcategory)
+                print(f'***{items_nbr} productos de {subcategory.name} recolectados.')
+                total_items += items_nbr
+        print(f'***{total_items} productos recolectados.')
+        print(f'***Productos guardados en: {str(path)}\{filename}')
 
 
 if __name__ == '__main__':
