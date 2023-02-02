@@ -81,7 +81,7 @@ def main():
     with open(path / filename, 'w', encoding='utf8') as outfile:
         total_items = 0
         scraper.set_writer(outfile)
-        for category in categories[3:5]:
+        for category in categories:
             print(f'***Recolectando datos de productos de {category.name}')
             for subcategory in category.subcategories:
                 items_nbr = scraper.get_products(category.name, subcategory)
