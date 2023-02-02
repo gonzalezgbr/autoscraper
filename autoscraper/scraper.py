@@ -5,7 +5,7 @@ import sys
 import requests
 
 from config.urls import UrlBuilder
-from models import Category, Product, Store, SubCategory
+from models import Product, Store, SubCategory
 
 
 class Scraper:

@@ -16,7 +16,7 @@ def parse_cmd_line_arguments():
         epilog="Gracias por usar autoscraper!",
     )
     parser.version = __version__
-    help_msge_ruta = """Ruta y nombre de archivo de salida. Por defecto, se 
+    help_msge_ruta = """Ruta y nombre de archivo de salida. Por defecto, se
     guarda en home del usuario como: nro_sucursal-nombre_sucursal-productos-fecha-hora.csv"""
     parser.add_argument("-v", "--version", action="version")
     parser.add_argument("-vc", "--ver-sucursales", action="store_true",
@@ -72,7 +72,7 @@ def main():
                 print(f'***{items_nbr} productos de {subcategory.name} recolectados.')
                 total_items += items_nbr
         print(f'***{total_items} productos recolectados.')
-        print(f'***Productos guardados en: {str(path)}\{filename}')
+        print(f'***Productos guardados en: {str(path / filename)}')
 
 
 if __name__ == '__main__':

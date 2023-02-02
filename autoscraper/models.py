@@ -5,7 +5,7 @@ class SubCategory:
     """Subcategoría de una Categoría de productos."""
 
     def __init__(self, link: str):
-        backslash = link[1:].find('/') 
+        backslash = link[1:].find('/')
         self.name = link[backslash+2:].lower().replace('-', ' ').strip()
         self.link = link
 
