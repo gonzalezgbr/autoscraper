@@ -3,6 +3,7 @@ import sys
 
 from autoscraper import __version__
 from scraper import Scraper
+from categoryscraper import CategoryScraper
 from storescraper import StoreScraper
 from utils import get_full_path
 
@@ -29,6 +30,9 @@ def parse_cmd_line_arguments():
 def main():
     """Función principal, direcciona ejecución del programa."""
 
+    print('***Bienvenido a autoscraper!')
+
+    print('***Obteniendo información de sucursales...')
     stores = StoreScraper().get_stores()
 
     args = parse_cmd_line_arguments()
@@ -53,8 +57,9 @@ def main():
     else:
         path, filename = get_full_path('', store)
 
+    print(f'***Obteniendo información de categorías para la sucursal {store.name}')
     scraper = Scraper(selected_store)
-    categories = scraper.get_categories()
+    categories = CategoryScraper(selected_store).get_categories()
 
     print(f'***Iniciando scraping para sucursal {store.name}')
     with open(path / filename, 'w', encoding='utf8') as outfile:
