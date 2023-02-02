@@ -17,6 +17,11 @@ class UrlBuilder:
 
         return self._BASE_URL + self._CATEGORIES_URL
 
+    def build_category_url(self, category_weblink: str, store_number: int) -> str:
+        """Devuelve url para scrapear subcategorías de una categoría y sucursal"""
+
+        return self._BASE_URL + category_weblink + f'?sc={store_number}'
+
     def build_product_url(self, start: int, subcategory_link: str, store: int) -> str:
         """Devuelve url para scrapear productos por subcategoría."""
         # ej:tecnologia/tv-y-video?O=OrderByTopSaleDESC&_from=0&_to=49&ft&sc=12
