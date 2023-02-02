@@ -22,8 +22,11 @@ class CategoryScraper:
             browser = p.chromium.launch()
             page = browser.new_page()
             url = self._url_builder.build_category_url(category.link, self._store)
-            page.goto(url)
-            page.wait_for_timeout(2000)
+            try:
+                page.goto(url)
+                page.wait_for_timeout(2000)
+            except TimeoutError:
+                print('ERROR: timeout excedido')
             html = page.content()
             browser.close()
 
