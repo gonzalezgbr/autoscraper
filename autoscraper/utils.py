@@ -40,3 +40,11 @@ def get_full_path(path: str, store: Store) -> tuple[Path, str]:
         filename = make_filename(store)
 
     return only_path, filename
+
+
+def find_store(stores: list[Store], sc: int):
+    """Devuelve store con el sc indicado."""
+
+    for store in stores:
+        if store.sc == sc:
+            return store
