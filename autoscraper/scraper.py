@@ -39,7 +39,9 @@ class Scraper:
                 sku=product_data['productId'],
                 url=product_data['link'],
                 stock=product_data['items'][0]['sellers'][0]['commertialOffer']['AvailableQuantity'],
-                description=product_data['description'].replace('\n', '/NEWLINE/ ').replace('\l\n', '/NEWLINE/'),
+                description=product_data['description'].replace('\n', '/NEWLINE/ ')
+                .replace('\r\n', '/NEWLINE/')
+                .replace('\r', '/NEWLINE/'),
                 ))
 
         return products
