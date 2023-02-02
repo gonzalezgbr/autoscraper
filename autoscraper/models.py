@@ -4,8 +4,9 @@ from dataclasses import dataclass, fields
 class SubCategory:
     """Subcategoría de una Categoría de productos."""
 
-    def __init__(self, name: str, link: str):
-        self.name = name
+    def __init__(self, link: str):
+        backslash = link[1:].find('/') 
+        self.name = link[backslash+2:].lower().replace('-', ' ').strip()
         self.link = link
 
     def __str__(self):
@@ -15,8 +16,9 @@ class SubCategory:
 class Category:
     """Categoría de productos."""
 
-    def __init__(self, name: str):
+    def __init__(self, name: str, link: str):
         self.name = name.lower()
+        self.link = link[:-6].lower()
         self.subcategories = []
 
     def __str__(self):
@@ -24,12 +26,9 @@ class Category:
 
         return f'{self.name.upper()}: {",".join(subcats)}'
 
-    def add_subcategory(self, name: str, link: str):
-        """Agregar una subcategoría a su Categoría padre."""
-        # se elimina el final del link: ?map=c,c,c
-        self.subcategories.append(
-            SubCategory(name.lower(), link[:-8].lower())
-            )
+    def add_subcategories(self, subcategories: list[SubCategory]):
+        """Agregar todas las subcategoría de una categoría."""
+        self.subcategories.extend(subcategories)
 
 
 @dataclass
