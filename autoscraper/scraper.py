@@ -23,37 +23,6 @@ class Scraper:
         self._writer = csv.DictWriter(self._outfile, Product.get_fields(), lineterminator='\n')
         self._writer.writeheader()
 
-    def parse_categories(self, text: str) -> list[Category]:
-        """Devuelve categorías extraídas del json descargado."""
-        categories_data_list = json.loads(text)['CategoriesTrees']
-        categories = []
-        for category_data in categories_data_list:
-            category = Category(category_data['Name'])
-            # Hay 3 niveles max. de categorías, pero los productos se pueden
-            # consultar por la categoría intermedia. Por ej, Electrodomésticos
-            # > Pequeños electrodomésticos para traer Pava Eléctrica, Batidoras
-            for child in category_data['Children']:
-                category.add_subcategory(child['Name'], child['Link'])
-            categories.append(category)
-
-        return categories
-
-    def get_categories(self) -> list[Category]:
-        """Descarga todas las categorías de productos disponibles."""
-
-        categories_url = self._url_builder.build_categories_url()
-        try:
-            r = requests.get(categories_url, timeout=10)
-        except requests.exceptions.RequestException as e:
-            print(f'ERROR: no se pudo realizar la descarga {e}')
-            sys.exit(1)
-        except json.decoder.JSONDecodeError as e:
-            print(f'ERROR: json descargado inválido {e}')
-            sys.exit(1)
-        categories = self.parse_categories(r.text)
-
-        return categories
-
     def parse_products(self, products_data: list, category_name: str, subcategory_name: str) -> list[Product]:
         """Retorna una lista de productos parseados del json descargado."""
         products = []
@@ -70,7 +39,7 @@ class Scraper:
                 sku=product_data['productId'],
                 url=product_data['link'],
                 stock=product_data['items'][0]['sellers'][0]['commertialOffer']['AvailableQuantity'],
-                description=product_data['description'],
+                description=product_data['description'].replace('\n', '\\n'),
                 ))
 
         return products
