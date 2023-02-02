@@ -1,9 +1,7 @@
 import json
 import sys
 
-import asyncio
 import requests
-#from pyppeteer import launch
 from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
 
