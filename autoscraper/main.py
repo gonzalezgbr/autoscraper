@@ -1,5 +1,6 @@
 import argparse
 import sys
+import time
 
 from autoscraper import __version__
 from scraper import Scraper
@@ -30,9 +31,10 @@ def parse_cmd_line_arguments():
 def main():
     """Función principal, direcciona ejecución del programa."""
 
+    start_time = time.time()
     print('***Bienvenido a autoscraper!')
 
-    print('***Obteniendo información de sucursales...')
+    print('***Obteniendo información de sucursales')
     stores = StoreScraper().get_stores()
 
     args = parse_cmd_line_arguments()
@@ -65,13 +67,14 @@ def main():
     with open(path / filename, 'w', encoding='utf8') as outfile:
         total_items = 0
         scraper.set_writer(outfile)
-        for category in categories[5:8]:
+        for category in categories:
             print(f'***Recolectando datos de productos de {category.name}')
             for subcategory in category.subcategories:
                 items_nbr = scraper.get_products(category.name, subcategory)
                 print(f'***{items_nbr} productos de {subcategory.name} recolectados.')
                 total_items += items_nbr
-        print(f'***{total_items} productos recolectados.')
+        total_time = int(time.time() - start_time) // 60
+        print(f'***{total_items} productos recolectados en {total_time} minutos.')
         print(f'***Productos guardados en: {str(path / filename)}')
 
 
